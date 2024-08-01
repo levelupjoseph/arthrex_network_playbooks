@@ -1,0 +1,42 @@
+---
+- name: Gather security policies from Palo Alto and export to a file
+  hosts: palo_alto
+  connection: local
+  gather_facts: false
+
+  vars:
+    device:
+      ip_address: "{{ inventory_hostname }}"
+      username: "admin"
+      password: "Changeme123"
+
+  collections:
+    - paloaltonetworks.panos
+    - community.general
+
+  tasks:
+    - name: Gather security policies
+      paloaltonetworks.panos.panos_security_rule_facts:
+        provider:
+          ip_address: "{{ ip_address }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          # api_key: "{{ palo_api_key }}"
+      register: security_policies
+
+    - name: Extract policy names
+      ansible.builtin.set_fact:
+        policy_names: "{{ security_policies.rules | map(attribute='name') | list }}"
+
+    - name: Write policy names to a text file
+      ansible.builtin.copy:
+        content: "{{ policy_names | join('\n') }}"
+        dest: "/tmp/security_policies.txt"
+
+    - name: Write policy names to an Excel file
+      community.general.write_excel:
+        path: "/tmp/security_policies.xlsx"
+        data:
+          - header:
+              - "Security Policy Names"
+            rows: "{{ policy_names | map('list') | list }}"

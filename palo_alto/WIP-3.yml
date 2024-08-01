@@ -1,0 +1,43 @@
+---
+- name: Gather BGP AS numbers from Palo Alto and export to a file
+  hosts: palo_alto
+  connection: local
+  gather_facts: false
+
+  vars:
+    device:
+      ip_address: "{{ inventory_hostname }}"
+      username: "admin"
+      password: "Changeme123"
+
+  collections:
+    - paloaltonetworks.panos
+    - community.general
+
+  tasks:
+    - name: Gather virtual router details
+      paloaltonetworks.panos.panos_virtual_router_facts:
+        provider:
+          ip_address: "{{ ip_address }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          # api_key: "{{ palo_api_key }}"
+      register: virtual_routers
+
+    - name: Extract BGP AS numbers
+      ansible.builtin.set_fact:
+        bgp_as_numbers: >
+          {{ virtual_routers.routers | selectattr('bgp.enable', 'eq', 'yes') | map(attribute='bgp.local_as') | list }}
+
+    - name: Write BGP AS numbers to a text file
+      ansible.builtin.copy:
+        content: "{{ bgp_as_numbers | join('\n') }}"
+        dest: "/tmp/bgp_as_numbers.txt"
+
+    - name: Write BGP AS numbers to an Excel file
+      community.general.write_excel:
+        path: "/tmp/bgp_as_numbers.xlsx"
+        data:
+          - header:
+              - "BGP AS Numbers"
+            rows: "{{ bgp_as_numbers | map('list') | list }}"

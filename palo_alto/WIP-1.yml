@@ -1,0 +1,39 @@
+---
+- name: Check and create address-object in Palo Alto WIP
+  hosts: palo_alto
+  connection: local
+  gather_facts: false
+
+  vars:
+    device:
+      ip_address: "{{ inventory_hostname }}"
+      username: "admin"
+      password: "Changeme123"
+
+  collections:
+    - paloaltonetworks.panos
+
+  tasks:
+    - name: Check if the address-object exists
+      paloaltonetworks.panos.panos_address_object:
+        provider:
+          ip_address: "{{ ip_address }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          # api_key: "{{ palo_api_key }}"
+        address: "test-address"
+        state: "present"
+      register: result
+
+    - name: Create the address-object if it does not exist
+      paloaltonetworks.panos.panos_address_object:
+        provider:
+          ip_address: "{{ inventory_hostname }}"
+          username: "{{ username }}"
+          password: "{{ password }}"
+          # api_key: "{{ palo_api_key }}"
+        address: "test-address"
+        value: "192.168.1.1"
+        description: "Test address object"
+        state: "present"
+      when: not result.changed
