@@ -1,0 +1,3 @@
+Hostname: c9800-1
+Model (PID): C9800-CL
+IOS Version: 17.09.04a
