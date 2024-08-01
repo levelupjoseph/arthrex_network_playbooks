@@ -1,0 +1,33 @@
+---
+- name: Ensure "ip ssh version 2" is configured on Cisco IOS device
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+  collections:
+    - cisco.ios
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_connection: network_cli
+    ansible_become: true
+  tasks:
+    - name: "Check ip ssh version"
+      cisco.ios.ios_command:
+        commands: "show running-config | include ip ssh version"
+      register: ssh_version_output
+
+    - name: "Display ip ssh version configuration"
+      ansible.builtin.debug:
+        msg: "{{ ssh_version_output.stdout_lines }}"
+
+    - name: Check SSH version and print message
+      ansible.builtin.debug:
+        msg: "{{ \"I'm OK\" if 'ip ssh version 2' in ssh_version_output.stdout_lines[0] else 'Fix it!' }}: {{ ssh_version_output.stdout_lines[0] }}"
+
+    - name: "Add ip ssh version 2 if not configured"
+      cisco.ios.ios_config:
+        lines:
+          - "ip ssh version 2"
+        save_when: modified
+      when: "'ip ssh version 2' not in ssh_version_output.stdout"
+      tags:
+        - fixit

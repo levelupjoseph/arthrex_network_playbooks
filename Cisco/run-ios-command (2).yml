@@ -1,0 +1,38 @@
+---
+- name: Execute Basic Command on Cisco IOS Switch
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+  collections:
+    - cisco.ios
+
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_connection: network_cli
+    ansible_become: true
+    # ansible_user: "{{ cisco_username }}"
+    # ansible_password: "{{ cisco_password }}"
+    # ansible_become_method: enable
+    # ansible_become_password: "{{ cisco_enable_password }}"
+  
+  tasks:
+    - name: "Ensure Switch Connectivity"
+      ansible.builtin.ping:
+      # Using the ansible.builtin.ping module to check connectivity to the Cisco switch
+      register: ping_result
+
+    - name: "Display Ping Result"
+      ansible.builtin.debug:
+        var: ping_result
+      # Displaying the result of the ping test for verification
+
+    - name: "Run 'Show Version' Command on IOS Switch"
+      cisco.ios.ios_command:
+        commands: show version
+      register: show_version_output
+      # This task runs the 'show version' command on the Cisco IOS switch and stores the output
+
+    - name: "Display 'Show Version' Command Output"
+      ansible.builtin.debug:
+        var: show_version_output.stdout_lines
+      # Displaying the output of the 'show version' command for verification

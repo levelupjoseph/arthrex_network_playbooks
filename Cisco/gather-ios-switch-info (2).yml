@@ -1,0 +1,35 @@
+---
+- name: Gather information from Cisco IOS Switch and export to a file
+  hosts: all
+  gather_facts: false
+  connection: network_cli
+  collections:
+    - cisco.ios
+  vars:
+    ansible_network_os: cisco.ios.ios
+    ansible_connection: network_cli
+    ansible_become: true
+
+  tasks:
+    - name: "Gather device facts"
+      cisco.ios.ios_facts:
+      register: switch_facts
+
+    - name: "Display switch information"
+      ansible.builtin.debug:
+        msg: "{{ switch_facts }}"
+
+    - name: "Display switch variables"
+      ansible.builtin.debug:
+        msg: > 
+             "{{ switch_facts.ansible_facts.ansible_net_hostname }}, 
+              {{ switch_facts.ansible_facts.ansible_net_model }}, 
+              {{ switch_facts.ansible_facts.ansible_net_version }}"
+
+    - name: "Write information to a text file"
+      copy:
+        content: |
+          Hostname: {{ switch_facts.ansible_facts.ansible_net_hostname }}
+          Model (PID): {{ switch_facts.ansible_facts.ansible_net_model }}
+          IOS Version: {{ switch_facts.ansible_facts.ansible_net_version }}
+        dest: "/tmp/switch_info.txt"
